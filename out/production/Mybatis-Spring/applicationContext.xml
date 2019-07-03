@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+       http://www.springframework.org/schema/tx
+       http://www.springframework.org/schema/tx/spring-tx-4.0.xsd">
+
+
+    <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="location">
+            <value>classpath:db.properties</value>
+        </property>
+    </bean>
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+        <property name="driverClassName" value="${jdbc.driver}"/>
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+    </bean>
+    <!--定义SqlSessionFactoryBean-->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+
+        <property name="dataSource" ref="dataSource"/>
+        <!--加载mybatis配置文件-->
+        <property name="configLocation">
+            <value>classpath:mybatis-config.xml</value>
+        </property>
+        <!--加载SQL映射文件-->
+        <property name="mapperLocations">
+            <list>
+                <value>classpath:cn/mybatisspring/dao/RoleDao-mapper.xml</value>
+                <value>classpath:cn/mybatisspring/dao/UsersDao-mapper.xml</value>
+            </list>
+        </property>
+    </bean>
+    <!--定义SqlSessionTemplate 实例-->
+    <bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+        <constructor-arg ref="sqlSessionFactory"/>
+    </bean>
+    <!--<bean id="usersDao" class="cn.mybatisspring.dao.impl.UsersDaoImpl">
+        <property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
+    </bean>-->
+
+    <!--定义数据映射器 将某包下的dao接口生成bean实例,RoleDao无实现类-->
+   <!-- <bean id="roleDao" class="org.mybatis.spring.mapper.MapperFactoryBean">
+        <property name="mapperInterface" value="cn.mybatisspring.dao.RoleDao"/>
+        &lt;!&ndash;<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>&ndash;&gt;
+        <property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+    </bean>-->
+
+
+    <!--定义数据映射器扫描类，将某包下的所有dao接口生成bean实例
+    bean id叫什么？
+    dao接口类的首字母小写roleDao, usersDao
+    value：sqlSessionFactory bean的id
+    -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="cn.mybatisspring.dao"/>
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+    </bean>
+
+    <!--
+    ref="usersDao" ：为映射器扫描类自动生成的
+    -->
+    <bean id="usersService" class="cn.mybatisspring.service.UsersServiceImpl">
+        <property name="usersDao" ref="usersDao"/>
+    </bean>
+
+    <!--2.定义事务管理器 对数据源进行管理-->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+    <!--&lt;!&ndash;3.定义事务增强 配置事务规则&ndash;&gt;
+    <tx:advice id="txAdvice" transaction-manager="transactionManager">
+        <tx:attributes>
+            &lt;!&ndash;对find开头的方法只读 。。。。&ndash;&gt;
+            <tx:method name="find*" read-only="true"/>
+            <tx:method name="add*" read-only="false"/>
+            <tx:method name="delete*" read-only="false"/>
+            <tx:method name="update*" read-only="false"/>
+        </tx:attributes>
+    </tx:advice>
+    &lt;!&ndash;4.Spring aop配置&ndash;&gt;
+    <aop:config>
+        <aop:pointcut id="poingcut" expression="execution(* cn.mybatisspring.service..*.*(..))"/>
+        &lt;!&ndash;织入：将事务增强和切入点关联起来&ndash;&gt;
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="poingcut"/>
+    </aop:config>-->
+
+    <!--注解方式-->
+    <!--3.添加注解事务支持-->
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+</beans>

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--namespace：接口的全类名-->
+<mapper namespace="cn.mybatisspring.dao.UsersDao">
+    <select id="getUserList" resultType="cn.mybatisspring.entity.Users">
+        select * from users
+    </select>
+    <select id="getUsersByID" resultType="cn.mybatisspring.entity.Users">
+        select * from users where id = #{id}
+    </select>
+    <select id="getUserByNamePwd" resultType="cn.mybatisspring.entity.Users">
+        select * from users where name = #{name} and pwd = #{pwd}
+    </select>
+
+    <select id="getUserByName" resultType="cn.mybatisspring.entity.Users">
+        select * from users where name = #{name}
+    </select>
+    <!--由于Users没有roleName 所以需要添加才能使返回值类型为Users-->
+    <!--<select id="getUsersByNameRID" resultType="com.entity.Users">
+        select u.*, r.id, r.roleName as roleName from users u inner join role r on u.roleId = r.id where u.name = #{name} and r.id = #{roleId}
+    </select>-->
+    <!--resultMap:
+        1.返回的列名和属性名不一致
+        2.多表连接查询
+        列名和属性名一一映射
+    -->
+    <!--<select id="getUsersByNameRID" resultMap="userResult">
+        select u.*, r.id, r.roleName as roleName from users u inner join role r on u.roleId = r.id where u.name = #{name} and r.id = #{roleId}
+    </select>
+    <resultMap id="userResult" type="com.entity.Users">
+        <id column="id" property="id"/>
+        <result column="roleName" property="roleName"/>
+        <result column="name" property="name"/>
+    </resultMap>-->
+    <!--将Role实体作为Users的属性
+    association：多对一 property:嵌套映射的属性名
+    collection：一对多
+    u:id r:id as 别名（区分两者id）
+    -->
+    <select id="getUsersByNameRID" resultMap="userResult">
+        select u.*, r.*, r.id as r_id from users u inner join role r on u.roleId = r.id where u.name = #{name} and r.id = #{roleId}
+    </select>
+
+
+
+    <resultMap id="userResult" type="cn.mybatisspring.entity.Users">
+        <id column="id" property="id"/>
+        <result column="roleName" property="roleName"/>
+        <result column="name" property="name"/>
+        <association property="role" javaType="cn.mybatisspring.entity.Role">
+            <id column="r_id" property="id"/>
+        </association>
+        <!--<collection property=""/>-->
+    </resultMap>
+
+    <insert id="insert" parameterType="cn.mybatisspring.entity.Users">
+        insert into users(id, name, pwd, roleId) values (#{id} , #{name}, #{pwd}, #{roleId});
+    </insert>
+
+    <delete id="delete">
+        delete from users where id = #{id}
+    </delete>
+
+    <update id="update">
+        update users set name = #{name}, roleId = #{roleId} where id = #{id}
+    </update>
+</mapper>

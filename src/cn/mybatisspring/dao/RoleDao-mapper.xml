@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--namespace：接口的全类名-->
+<mapper namespace="cn.mybatisspring.dao.RoleDao">
+    <select id="getRoleID" resultMap="roleResultMap">
+        select r.*,u.*, u.id as uid from users u inner join role r on u.roleId = r.id where r.id = #{rid}
+    </select>
+    <!--角色的id和属性id，其他属性一样不用管自动映射-->
+    <resultMap id="roleResultMap" type="cn.mybatisspring.entity.Role">
+        <id column="id" property="id"/>
+        <!--右边用户列表嵌套到role中：一对多
+        property:Role中Users集合的属性名-->
+        <collection property="usersList" ofType="cn.mybatisspring.entity.Users">
+            <!--id和Role 的id 一样 需起别名-->
+            <id column="uid" property="id"/>
+        </collection>
+    </resultMap>
+</mapper>
